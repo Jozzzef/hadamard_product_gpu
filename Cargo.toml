@@ -1,0 +1,18 @@
+[package]
+name = "hadamard_product_gpu"
+version = "0.1.0"
+edition = "2024"
+authors = ["Jozef Lumaj <jozef.lumaj@gmail.com>"]
+description = "A very simple library to perform hadamard products on the GPU"
+
+[features]
+cuda = ["cubecl/cuda"]
+wpgu = ["cubecl/wgpu"]
+
+[[example]]
+name = "simple_example"
+required-features = ["cuda"]
+
+[dependencies]
+cubecl = {version = "0.5.0", features = ["cuda", "wgpu"]}
+rand = "0.8"
