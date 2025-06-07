@@ -1,4 +1,4 @@
-//! run this with: cargo run --example simple_example 
+//! run this with: cargo run --example simple_example  -
 use rand::distributions::{Distribution, Uniform};
 use std::cmp::max;
 use std::time::Instant;
