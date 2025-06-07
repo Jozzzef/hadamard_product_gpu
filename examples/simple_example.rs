@@ -71,8 +71,11 @@ fn main() {
     println!("c = {:?}", c);
     println!("cpu time: {:?}", duration_cpu);
 
+    // run hadamard product on the gpu and time it
+    let start_time_gpu = Instant::now();
     #[cfg(feature = "cuda")]
     hadamard_product_gpu::launch::<cubecl::cuda::CudaRuntime>(&Default::default());
     // #[cfg(feature = "wgpu")]
     // hadamard_product_gpu::launch::<cubecl::wgpu::WgpuRuntime>(&Default::default());
+    let duration_gpu = start_time_gpu.elapsed();
 }
