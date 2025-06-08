@@ -1,4 +1,4 @@
-//! run this with: cargo run --example simple_example  -
+//! run this with: cargo run --example simple_example --features="cuda"
 use rand::distributions::{Distribution, Uniform};
 use std::cmp::max;
 use std::time::Instant;
@@ -57,7 +57,6 @@ fn hp_on_cpu(a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) -> Vec<Vec<i64>>{
 }
 
 fn main() {
-    println!("Hello, world!");
     //define our vectors
     let a = vec_factory(2, 2, 0, 10);
     let b = vec_factory(2, 2, 0, 10);
@@ -65,6 +64,7 @@ fn main() {
     println!("b = {:?}", b);
 
     // run hadamard product on the cpu and time it
+    println!("running on the cpu...");
     let start_time_cpu = Instant::now();
     let c  = hp_on_cpu(&a, &b);
     let duration_cpu = start_time_cpu.elapsed();
@@ -72,10 +72,17 @@ fn main() {
     println!("cpu time: {:?}", duration_cpu);
 
     // run hadamard product on the gpu and time it
+    println!("");
+    println!("running on the gpu...");
     let start_time_gpu = Instant::now();
     #[cfg(feature = "cuda")]
-    hadamard_product_gpu::launch::<cubecl::cuda::CudaRuntime>(&Default::default());
+    hadamard_product_gpu::launch::<cubecl::cuda::CudaRuntime>(
+        &Default::default(),
+        &a,
+        &b
+    );
     // #[cfg(feature = "wgpu")]
     // hadamard_product_gpu::launch::<cubecl::wgpu::WgpuRuntime>(&Default::default());
     let duration_gpu = start_time_gpu.elapsed();
+    println!("gpu time: {:?}", duration_gpu);
 }

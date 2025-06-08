@@ -14,9 +14,9 @@ fn vec_to_flat_u8_vec(matrix: &Vec<Vec<i64>>) -> Vec<u8> {
 
 #[cube]
 fn hadamard_prod(
-        a: &Array<Line<F>>, 
-        b: &Array<Line<F>>, 
-        c: &mut Array<Line<F>>
+        a: &Array<Line<i64>>, 
+        b: &Array<Line<i64>>, 
+        c: &mut Array<Line<i64>>
 ) {
     todo!();
 }
