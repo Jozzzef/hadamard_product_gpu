@@ -76,7 +76,7 @@ fn main() {
     println!("running on the gpu...");
     let start_time_gpu = Instant::now();
     #[cfg(feature = "cuda")]
-    hadamard_product_gpu::launch::<cubecl::cuda::CudaRuntime>(
+    hadamard_product_gpu::launch_hp::<cubecl::cuda::CudaRuntime>(
         &Default::default(),
         &a,
         &b
