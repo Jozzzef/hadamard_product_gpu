@@ -41,8 +41,8 @@ fn hp_on_cpu(a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) -> Vec<Vec<i64>>{
     c.resize(max_m, vec![0i64; max_n]);
 
     //add the two matrices together and save in c
-    for i in 0..a.len() {
-       for j in 0..a[0].len() {
+    for i in 0..max_m {
+       for j in 0..max_n {
             let zero_vec = vec![0i64; max_n];
             let zero = 0;
             let a_i = a.get(i).unwrap_or(&zero_vec);
