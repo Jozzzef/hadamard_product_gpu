@@ -17,13 +17,12 @@ fn hadamard_prod(
         a: &Tensor<Line<i64>>, 
         b: &Tensor<Line<i64>>, 
         c: &mut Tensor<Line<i64>>,
-        max_rows: u32,
-        max_cols: u32
 ) {
     let a_rows: u32 = a.shape(0);
     let a_cols: u32 = a.shape(1);
     let b_rows: u32 = b.shape(0);
     let b_cols: u32 = b.shape(1);
+    let c_cols: u32 = c.shape(1);
     let mut a_val = Line::new(0i64);
     let mut b_val = Line::new(0i64);
     if ABSOLUTE_POS_X < a_rows && ABSOLUTE_POS_Y < a_cols {
@@ -33,7 +32,7 @@ fn hadamard_prod(
         b_val = b[ABSOLUTE_POS_X * b_cols + ABSOLUTE_POS_Y]
     }
         
-    c[ABSOLUTE_POS_X * max_cols + ABSOLUTE_POS_Y] = a_val + b_val;
+    c[ABSOLUTE_POS_X * c_cols + ABSOLUTE_POS_Y] = a_val + b_val;
 }
 
 pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) {
@@ -62,7 +61,10 @@ pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<
             // define a single workgroup
             CubeCount::Static(1, 1, 1), 
             // if vec = 1, then define the same # of threads as the length of the flattened matrix 
-            CubeDim::new(max_len as u32 / vectorization, 1, 1),
+            CubeDim::new(
+                max_rows as u32 / vectorization, 
+                max_cols as u32 / vectorization, 
+                1),
             // the three handles for the input and output memory in the gpu; our kernel params
             TensorArg::from_raw_parts::<i64>(
                 &a_handle, //gpu memory location pointer
@@ -79,8 +81,6 @@ pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<
                 &[max_cols as usize, 1], // strides for row major matrix format
                 &[max_rows as usize, max_cols as usize], // shape of the original matrix
                 vectorization as u8), // number of elements to go through each thread
-            ScalarArg::new(max_rows),
-            ScalarArg::new(max_cols)
         );
     }
 
