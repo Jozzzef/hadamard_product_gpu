@@ -1,11 +1,11 @@
 use cubecl::prelude::*;
 use std::cmp::max;
 
-fn matrix_dimensions(matrix: &Vec<Vec<i64>>) -> (u32, u32){
+fn matrix_dimensions(matrix: &[Vec<i64>]) -> (u32, u32){
     (matrix.len() as u32, matrix[0].len() as u32)
 }
 
-fn vec_to_flat_u8_vec(matrix: &Vec<Vec<i64>>) -> Vec<u8> {
+fn vec_to_flat_u8_vec(matrix: &[Vec<i64>]) -> Vec<u8> {
     matrix.iter()
         .flatten()                    
         .flat_map(|&x| x.to_ne_bytes())  
@@ -37,8 +37,8 @@ fn hadamard_prod(
 
 pub fn launch_hp<R: Runtime>(
         device: &R::Device, 
-        a: &Vec<Vec<i64>>, 
-        b: &Vec<Vec<i64>>
+        a: &[Vec<i64>], 
+        b: &[Vec<i64>]
 ) -> Vec<Vec<i64>> {
     let client = R::client(device);
 
