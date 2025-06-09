@@ -60,15 +60,18 @@ fn main() {
     //define our vectors
     let a = vec_factory(2, 2, 0, 10);
     let b = vec_factory(2, 3, 0, 10);
+
+    println!("random matrices: ");
     println!("a = {:?}", a);
     println!("b = {:?}", b);
 
     // run hadamard product on the cpu and time it
+    println!("");
     println!("running on the cpu...");
     let start_time_cpu = Instant::now();
-    let c  = hp_on_cpu(&a, &b);
+    let c_cpu  = hp_on_cpu(&a, &b);
     let duration_cpu = start_time_cpu.elapsed();
-    println!("c = {:?}", c);
+    println!("c = {:?}", c_cpu);
     println!("cpu time: {:?}", duration_cpu);
 
     // run hadamard product on the gpu and time it
@@ -76,7 +79,7 @@ fn main() {
     println!("running on the gpu...");
     let start_time_gpu = Instant::now();
     #[cfg(feature = "cuda")]
-    hadamard_product_gpu::launch_hp::<cubecl::cuda::CudaRuntime>(
+    let c_gpu = hadamard_product_gpu::launch_hp::<cubecl::cuda::CudaRuntime>(
         &Default::default(),
         &a,
         &b
@@ -84,5 +87,8 @@ fn main() {
     // #[cfg(feature = "wgpu")]
     // hadamard_product_gpu::launch::<cubecl::wgpu::WgpuRuntime>(&Default::default());
     let duration_gpu = start_time_gpu.elapsed();
+    println!("c = {:?}", c_gpu);
     println!("gpu time: {:?}", duration_gpu);
+
+    assert!(c_cpu == c_gpu, "the two matrices are not the same!!")
 }

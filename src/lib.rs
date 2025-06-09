@@ -35,8 +35,11 @@ fn hadamard_prod(
     c[ABSOLUTE_POS_X * c_cols + ABSOLUTE_POS_Y] = a_val + b_val;
 }
 
-pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) {
-    println!("entered launch function");
+pub fn launch_hp<R: Runtime>(
+        device: &R::Device, 
+        a: &Vec<Vec<i64>>, 
+        b: &Vec<Vec<i64>>
+) -> Vec<Vec<i64>> {
     let client = R::client(device);
 
     //reshape vecs and send them to gpu memory and intialize output memory
@@ -87,15 +90,21 @@ pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<
     let c_bytes = client.read_one(c_handle.binding());
     let c_output = i64::from_bytes(&c_bytes);
 
-    let b_bytes = client.read_one(b_handle.binding());
-    let b_output = i64::from_bytes(&b_bytes);
+    //convert back to Vec<Vec<i64>>
+    let c_vec: Vec<Vec<i64>> = c_output.chunks(max_cols as usize)
+        .map(|chunk| chunk.to_vec())
+        .collect();
 
-    let a_bytes = client.read_one(a_handle.binding());
-    let a_output = i64::from_bytes(&a_bytes);
+    // let b_bytes = client.read_one(b_handle.binding());
+    // let b_output = i64::from_bytes(&b_bytes);
 
-    println!("a = {:?}", a_output);
-    println!("b = {:?}", b_output);
-    println!("c = {:?}", c_output);
+    // let a_bytes = client.read_one(a_handle.binding());
+    // let a_output = i64::from_bytes(&a_bytes);
 
+    // println!("a = {:?}", a_output);
+    // println!("b = {:?}", b_output);
+    // println!("c = {:?}", c_output);
+
+    c_vec
 }
 
