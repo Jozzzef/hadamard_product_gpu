@@ -60,7 +60,7 @@ pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<
                 &[b_rows as usize, b_cols as usize], // shape of the original matrix
                 vectorization as u8), // number of elements to go through each thread
             TensorArg::from_raw_parts::<i64>(
-                &b_handle, //gpu memory location pointer
+                &c_handle, //gpu memory location pointer
                 &[max_cols as usize, 1], // strides for row major matrix format
                 &[max_rows as usize, max_cols as usize], // shape of the original matrix
                 vectorization as u8), // number of elements to go through each thread
