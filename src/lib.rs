@@ -14,14 +14,11 @@ fn vec_to_flat_u8_vec(matrix: &Vec<Vec<i64>>) -> Vec<u8> {
 
 #[cube(launch)]
 fn hadamard_prod(
-        a: &Array<Line<i64>>, 
-        b: &Array<Line<i64>>, 
-        c: &mut Array<Line<i64>>
+        a: &Tensor<Line<i64>>, 
+        b: &Tensor<Line<i64>>, 
+        c: &mut Tensor<Line<i64>>
 ) {
-    let a_val = if ABSOLUTE_POS < a.len() { a[ABSOLUTE_POS] } else { Line::new(0) };
-    let b_val = if ABSOLUTE_POS < b.len() { b[ABSOLUTE_POS] } else { Line::new(0) };
-    c[ABSOLUTE_POS] = a_val + b_val; 
-    //c[ABSOLUTE_POS] = Line::new(1i64) + 1i64;
+    c[ABSOLUTE_POS] = Line::new(1i64) + 1i64;
 }
 
 pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) {
@@ -29,11 +26,13 @@ pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<
     let client = R::client(device);
 
     //reshape vecs and send them to gpu memory and intialize output memory
-    let a_dims = matrix_dimensions(a);
-    let b_dims = matrix_dimensions(b);
+    let (a_rows, a_cols) = matrix_dimensions(a);
+    let (b_rows, b_cols) = matrix_dimensions(b);
     let a_line_vec: Vec<u8> = vec_to_flat_u8_vec(a);
     let b_line_vec: Vec<u8> = vec_to_flat_u8_vec(b);
     let max_len = max(a_line_vec.len(), b_line_vec.len());
+    let max_rows = max(a_rows, b_rows);
+    let max_cols = max(a_cols, b_cols);
     let c_handle = client.empty(max_len); //* core::mem::size_of::<i64>());
     let a_handle = client.create(&a_line_vec);
     let b_handle = client.create(&b_line_vec);
@@ -50,9 +49,21 @@ pub fn launch_hp<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<
             // if vec = 1, then define the same # of threads as the length of the flattened matrix 
             CubeDim::new(max_len as u32 / vectorization, 1, 1),
             // the three handles for the input and output memory in the gpu; our kernel params
-            ArrayArg::from_raw_parts::<i64>(&a_handle, a_line_vec.len(), vectorization as u8),
-            ArrayArg::from_raw_parts::<i64>(&b_handle, b_line_vec.len(), vectorization as u8),
-            ArrayArg::from_raw_parts::<i64>(&c_handle, max_len.clone(), vectorization as u8),
+            TensorArg::from_raw_parts::<i64>(
+                &a_handle, //gpu memory location pointer
+                &[a_cols as usize, 1], // strides for row major matrix format
+                &[a_rows as usize, a_cols as usize], // shape of the original matrix
+                vectorization as u8), // number of elements to go through each thread
+            TensorArg::from_raw_parts::<i64>(
+                &b_handle, //gpu memory location pointer
+                &[b_cols as usize, 1], // strides for row major matrix format
+                &[b_rows as usize, b_cols as usize], // shape of the original matrix
+                vectorization as u8), // number of elements to go through each thread
+            TensorArg::from_raw_parts::<i64>(
+                &b_handle, //gpu memory location pointer
+                &[max_cols as usize, 1], // strides for row major matrix format
+                &[max_rows as usize, max_cols as usize], // shape of the original matrix
+                vectorization as u8), // number of elements to go through each thread
         );
     }
 
