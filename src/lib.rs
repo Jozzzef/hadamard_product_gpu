@@ -31,7 +31,7 @@ pub fn launch<R: Runtime>(device: &R::Device, a: &Vec<Vec<i64>>, b: &Vec<Vec<i64
     let a_line_vec: Vec<u8> = vec_to_flat_u8_vec(a);
     let b_line_vec: Vec<u8> = vec_to_flat_u8_vec(b);
     let max_len = max(a_line_vec.len(), b_line_vec.len());
-    let c_handle = client.empty(max_len * core::mem::size_of::<i64>());
+    let c_handle = client.empty(max_len); //* core::mem::size_of::<i64>());
     let a_handle = client.create(&a_line_vec);
     let b_handle = client.create(&b_line_vec);
 
