@@ -90,8 +90,6 @@ fn main() {
         &a,
         &b
     );
-    // #[cfg(feature = "wgpu")]
-    // hadamard_product_gpu::launch::<cubecl::wgpu::WgpuRuntime>(&Default::default());
     let duration_gpu = start_time_gpu.elapsed();
     println!("c = {:?}", c_gpu);
     println!("gpu time: {:?}", duration_gpu);
