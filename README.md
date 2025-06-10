@@ -7,8 +7,6 @@
 
 Clone the repo and add it to your Cargo.toml:
 ```toml
-```
-```toml
 hadamard_product_gpu = { path = "../path/to/cloned/hadamard_product_gpu"}
 ```
 
