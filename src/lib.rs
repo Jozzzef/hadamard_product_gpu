@@ -1,5 +1,5 @@
-use cubecl::{ir::Vectorization, prelude::*};
-use std::cmp::{max, min};
+use cubecl::prelude::*;
+use std::cmp::max;
 
 fn matrix_dimensions(matrix: &[Vec<i64>]) -> (u32, u32){
     (matrix.len() as u32, matrix[0].len() as u32)
@@ -57,12 +57,11 @@ pub fn launch_hp<R: Runtime>(
     // split up the data in workgroups of 256 threads per group
     let workgroup_size = 256;
     let square_workgroup_dims = (workgroup_size as f64).sqrt() as u32;
-    let num_matrix_elements = max_rows * max_cols;
     let (x_work, y_work, z_work): (u32, u32, u32) = (
         // div_ceil() rounds up to the next integer, this will give us enough workgroups to cover
         // all elements needed, leaving some idle typically
-        num_matrix_elements.div_ceil(workgroup_size), 
-        1,
+        max_cols.div_ceil(square_workgroup_dims), 
+        max_rows.div_ceil(square_workgroup_dims),
         1
     );
     let max_cube_count = client.properties().hardware_properties().max_cube_count;

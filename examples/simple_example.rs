@@ -31,24 +31,30 @@ fn hp_on_cpu(a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) -> Vec<Vec<i64>>{
     let max_m: usize = max(a_m as usize, b_m as usize);
     let max_n: usize = max(a_n as usize, b_n as usize);
 
-    //define c, expand to max size
-    let mut c: Vec<Vec<i64>> = vec![];
-    //resize n dimension
-    for m in &mut c {
-        m.resize(max_n, 0i64);
-    }
-    //resize m dimension
-    c.resize(max_m, vec![0i64; max_n]);
+    //define c
+    let mut c: Vec<Vec<i64>> = vec![vec![0i64; max_n]; max_m];
 
     //add the two matrices together and save in c
     for i in 0..max_m {
        for j in 0..max_n {
-            let zero_vec = vec![0i64; max_n];
-            let zero = 0;
-            let a_i = a.get(i).unwrap_or(&zero_vec);
-            let a_ij = a_i.get(j).unwrap_or(&zero);
-            let b_i = b.get(i).unwrap_or(&zero_vec);
-            let b_ij = b_i.get(j).unwrap_or(&zero);
+            let a_ij = match a.get(i){
+                Some(a_i) => {
+                    match a_i.get(j) {
+                        Some(a_ij) => *a_ij,
+                        None => 0
+                    }
+                },
+                None => 0
+            };
+            let b_ij = match b.get(i){
+                Some(b_i) => {
+                    match b_i.get(j) {
+                        Some(b_ij) => *b_ij,
+                        None => 0
+                    }
+                },
+                None => 0
+            };
             c[i][j] = a_ij + b_ij;
         }
     }
@@ -58,8 +64,8 @@ fn hp_on_cpu(a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) -> Vec<Vec<i64>>{
 
 fn main() {
     //define our vectors
-    let a = vec_factory(16, 16, 0, 10);
-    let b = vec_factory(15, 15, 0, 10);
+    let a = vec_factory(34, 32, 0, 10);
+    let b = vec_factory(54, 32, 0, 10);
 
     println!("random matrices: ");
     println!("a = {:?}", a);
