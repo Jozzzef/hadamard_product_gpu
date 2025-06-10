@@ -58,8 +58,8 @@ fn hp_on_cpu(a: &Vec<Vec<i64>>, b: &Vec<Vec<i64>>) -> Vec<Vec<i64>>{
 
 fn main() {
     //define our vectors
-    let a = vec_factory(2, 4, 0, 10);
-    let b = vec_factory(2, 3, 0, 10);
+    let a = vec_factory(15, 15, 0, 10);
+    let b = vec_factory(15, 15, 0, 10);
 
     println!("random matrices: ");
     println!("a = {:?}", a);

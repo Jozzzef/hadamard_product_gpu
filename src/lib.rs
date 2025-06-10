@@ -1,5 +1,5 @@
-use cubecl::prelude::*;
-use std::cmp::max;
+use cubecl::{ir::Vectorization, prelude::*};
+use std::cmp::{max, min};
 
 fn matrix_dimensions(matrix: &[Vec<i64>]) -> (u32, u32){
     (matrix.len() as u32, matrix[0].len() as u32)
@@ -22,17 +22,19 @@ fn hadamard_prod(
     let a_cols: u32 = a.shape(1);
     let b_rows: u32 = b.shape(0);
     let b_cols: u32 = b.shape(1);
+    let c_rows: u32 = c.shape(0);
     let c_cols: u32 = c.shape(1);
     let mut a_val = Line::new(0i64);
     let mut b_val = Line::new(0i64);
-    if ABSOLUTE_POS_X < a_rows && ABSOLUTE_POS_Y < a_cols {
-        a_val = a[ABSOLUTE_POS_X * a_cols + ABSOLUTE_POS_Y]
+    if ABSOLUTE_POS_Y < a_rows && ABSOLUTE_POS_X < a_cols {
+        a_val = a[ABSOLUTE_POS_Y * a_cols + ABSOLUTE_POS_X]
     }
-    if ABSOLUTE_POS_X < b_rows && ABSOLUTE_POS_Y < b_cols {
-        b_val = b[ABSOLUTE_POS_X * b_cols + ABSOLUTE_POS_Y]
+    if ABSOLUTE_POS_Y < b_rows && ABSOLUTE_POS_X < b_cols {
+        b_val = b[ABSOLUTE_POS_Y * b_cols + ABSOLUTE_POS_X]
     }
-        
-    c[ABSOLUTE_POS_X * c_cols + ABSOLUTE_POS_Y] = a_val + b_val;
+    if ABSOLUTE_POS_Y < c_rows && ABSOLUTE_POS_X < c_cols {
+        c[ABSOLUTE_POS_Y * c_cols + ABSOLUTE_POS_X] = a_val + b_val;
+    }
 }
 
 pub fn launch_hp<R: Runtime>(
@@ -42,7 +44,7 @@ pub fn launch_hp<R: Runtime>(
 ) -> Vec<Vec<i64>> {
     let client = R::client(device);
 
-    //reshape vecs and send them to gpu memory and intialize output memory
+    //reshape vecs and prepare to be sent to gpu memory 
     let (a_rows, a_cols) = matrix_dimensions(a);
     let (b_rows, b_cols) = matrix_dimensions(b);
     let a_line_vec: Vec<u8> = vec_to_flat_u8_vec(a);
@@ -50,23 +52,44 @@ pub fn launch_hp<R: Runtime>(
     let max_len = max(a_line_vec.len(), b_line_vec.len());
     let max_rows = max(a_rows, b_rows);
     let max_cols = max(a_cols, b_cols);
+
+    let vectorization: u32 = 1; // >1 causing bug for Tensor type
+    // split up the data in workgroups of 256 threads per group
+    let workgroup_size = 256;
+    let square_workgroup_dims = (workgroup_size as f64).sqrt() as u32;
+    let num_matrix_elements = max_rows * max_cols;
+    let (x_work, y_work, z_work): (u32, u32, u32) = (
+        // div_ceil() rounds up to the next integer, this will give us enough workgroups to cover
+        // all elements needed, leaving some idle typically
+        num_matrix_elements.div_ceil(workgroup_size), 
+        1,
+        1
+    );
+    let max_cube_count = client.properties().hardware_properties().max_cube_count;
+    let max_2d_threads = client.properties().hardware_properties().max_units_per_cube;
+    println!("max threads in a workgroup = {}", max_2d_threads);
+    println!("max workgroups = {:?}", max_cube_count);
+    println!("workgroups in usage = {}", x_work);
+
+    //allocate memory
     let c_handle = client.empty(max_len); //* core::mem::size_of::<i64>());
     let a_handle = client.create(&a_line_vec);
     let b_handle = client.create(&b_line_vec);
-
-    //vectorization = 
-    let vectorization: u32 = 1;
 
     unsafe {
         hadamard_prod::launch::<R>(
             // pass in ComputeClient with generic R for the runtime
             &client,
             // define a single workgroup
-            CubeCount::Static(1, 1, 1), 
+            CubeCount::Static(
+                x_work, 
+                y_work, 
+                z_work
+            ), 
             // if vec = 1, then define the same # of threads as the length of the flattened matrix 
             CubeDim::new(
-                max_rows as u32 / vectorization, 
-                max_cols as u32 / vectorization, 
+                square_workgroup_dims, 
+                square_workgroup_dims, 
                 1),
             // the three handles for the input and output memory in the gpu; our kernel params
             TensorArg::from_raw_parts::<i64>(
